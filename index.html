@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+
+  <head>
+    <meta charset="utf-8">
+
+    <title>Prez</title>
+
+    <meta name="description" content="-- DESCRIPTION HERE --">
+    <meta name="author" content="cspeisman">
+
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
+
+    <link rel="stylesheet" href="css/reveal.css">
+    <link rel="stylesheet" href="css/theme/solarized.css" id="theme">
+
+    <!-- Code syntax highlighting -->
+    <link rel="stylesheet" href="css/highlight/styles/zenburn.css" id="highlight-theme">
+
+    <!-- Printing and PDF exports -->
+    <script>
+      var link = document.createElement( 'link' );
+      link.rel = 'stylesheet';
+      link.type = 'text/css';
+      link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+      document.getElementsByTagName( 'head' )[0].appendChild( link );
+    </script>
+
+    <link rel="stylesheet" href="css/custom.css">
+
+  </head>
+
+  <body>
+
+    <div class="reveal">
+      <div class="slides"><section id="welcome" class="slide">
+<h1>What the flux??</h1><p>(flux and redux)</p>
+</section>
+<section id="agenda" class="slide">
+<h2>Flux, Redux</h2><ul>
+<li><p>functional programming</p>
+</li>
+<li><p>Flux architecture</p>
+</li>
+<li><p>Redux</p>
+</li>
+</ul>
+</section>
+<section id="fp-intro" class="slide">
+<h2>Functional Programming</h2><ul>
+<li><p>No side effects</p>
+<ul>
+<li>takes an input and returns a value (pure functions)</li>
+<li>No side effects, or outside manipulations</li>
+<li>if given the same input it will always return the same value</li>
+<li>STATELESS!</li>
+</ul>
+</li>
+<li><p>Easy to unit test</p>
+</li>
+</ul>
+</section>
+<section id="fp-example" class="slide">
+<p>stateless</p>
+<pre><code>    <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">countUsers</span><span class="hljs-params">(users)</span> {</span>
+        <span class="hljs-keyword">return</span> users.<span class="hljs-built_in">length</span>
+      }
+</code></pre>
+</section>
+<section id="fp-example" class="slide">
+<p>stateless</p>
+<pre><code>  <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">countDeactivatedUsers</span><span class="hljs-params">(allUsers, activeUsers)</span> {</span>
+    <span class="hljs-keyword">return</span> allUsers.<span class="hljs-built_in">length</span> - activeUsers.<span class="hljs-built_in">length</span>
+  }
+</code></pre>
+</section>
+<section id="fp-example" class="slide">
+<p>composability!</p>
+<pre><code>  <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">countUsers</span><span class="hljs-params">(users)</span> {</span>
+    <span class="hljs-keyword">return</span> users.<span class="hljs-built_in">length</span>
+  }
+
+  <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">countDeactivatedUsers</span><span class="hljs-params">(allUsers, activeUsers)</span> {</span>
+    <span class="hljs-keyword">return</span> countUsers(allUsers) - activeUsers.<span class="hljs-built_in">length</span>
+  }
+</code></pre>
+</section>
+<section id="fp-example" class="slide">
+<p>Not Stateless</p>
+<pre><code>  <span class="hljs-comment">/* Both these functions become statefull */</span>
+  <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">countDeactivatedUsers</span><span class="hljs-params">(allUsers, activeUsers)</span> </span>{
+    <span class="hljs-keyword">return</span> countUsers(allUsers) - activeUsers.length
+  }
+
+  <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">countUsers</span><span class="hljs-params">(users)</span> </span>{
+    users = localStorage.users
+    <span class="hljs-keyword">return</span> users.length
+  }
+</code></pre>
+</section>
+<section id="fp-example" class="slide">
+<p>Not Stateless</p>
+<pre><code>  <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">countDeactivatedUsers</span><span class="hljs-params">(allUsers, activeUsers)</span> </span>{
+    <span class="hljs-keyword">return</span> countUsers(allUsers) - activeUsers.length
+  }
+
+  <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">countUsers</span><span class="hljs-params">(users)</span> </span>{
+    <span class="hljs-comment">/* MUTATION!!! Whatta jerk!! */</span>
+    users.pop()
+
+    <span class="hljs-comment">/* cover up */</span>
+    <span class="hljs-keyword">return</span> users.length + <span class="hljs-number">1</span>
+  }
+</code></pre>
+</section>
+<section id="fp-example" class="slide">
+<p>Not Stateless</p>
+<pre><code>  var extras = <span class="hljs-matrix">[]</span>
+
+  <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">countDeactivatedUsers</span><span class="hljs-params">(allUsers, activeUsers)</span> {</span>
+    <span class="hljs-keyword">return</span> countUsers(allUsers) - activeUsers.<span class="hljs-built_in">length</span> - extras.<span class="hljs-built_in">length</span>;
+  }
+</code></pre>
+</section>
+<section id="fp-example" class="slide">
+<p>Not Stateless but appears it.</p>
+<pre><code>  <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">countDeactivatedUsers</span><span class="hljs-params">(allUsers, activeUsers)</span> {</span>
+    localStorage.users = allUsers;
+    <span class="hljs-keyword">return</span> countUsers(allUsers) - activeUsers.<span class="hljs-built_in">length</span>;
+  }
+</code></pre>
+</section>
+<section id="flux-problem" class="slide">
+<h2>Flux Architecture - The Problem</h2><ul>
+<li>The underlying problem is how data flows through applications<ul>
+<li>the most basic <strong>dynamic</strong> applications consist of models which hold data, and are responsible for passing data to views</li>
+</ul>
+</li>
+</ul>
+<p><img src="https://dl.dropboxusercontent.com/u/13155426/problem_with_mvc_1.png" alt="MVC Issue 1"></p>
+</section>
+<section id="flux-problem" class="slide">
+<ul>
+<li>As applications and user actions start to get more complex, views need to update models, and sometimes models need to update models.. and asynchronously at that!</li>
+</ul>
+<p><img src="https://dl.dropboxusercontent.com/u/13155426/problem_with_mvc_2.png" alt="MVC Issue 2"></p>
+</section>
+<section id="solution" class="slide">
+<h2>The Solution - Unidirectional dataflow</h2><p>Facebook decided to try a new architecture where data flows in one direction, and one direction only (make clever one direction boy band joke)
+<img src="https://dl.dropboxusercontent.com/u/13155426/flux_architecture.png" alt="Flux Arch"></p>
+</section>
+<section id="flux-terms" class="slide">
+<h3>Things that make up flux architecture</h3><ul>
+<li>Store</li>
+<li>View</li>
+<li>Actions</li>
+<li>Dispatcher</li>
+</ul>
+</section>
+<section id="flux-terms" class="slide">
+<h3>What the term??</h3><h4>Action</h4><ul>
+<li>Action: an object literal that describes what happened in the view<ul>
+<li>Example: {type: &#39;ADD_TASK&#39;, task: &#39;buy salami&#39;}</li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="flux-terms-store" class="slide">
+<h2>Store</h2><ul>
+<li>Store: Holds all the application state and state changing logic<ul>
+<li>Over-controlling bureaucrat</li>
+<li>All state changes must be made by the store personally</li>
+<li>You can&#39;t request it to change state (no setters)</li>
+<li>To request a state change, you must follow the proper procedures (you must submit an action via the dispatcher)</li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="flux-term-dispatcher" class="slide">
+<h3>Dispatcher</h3><ul>
+<li>Dispatcher: basically a big registry of callbacks (Store methods)<ul>
+<li>Acts as the operator between the store(s) and action</li>
+<li>Kind of like the peanut/beer guy at sporting events<ul>
+<li>takes an action, then goes to all the stores and ask who wants the action</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="links" class="slide">
+<h1>Links</h1><p><a href="https://facebook.github.io/flux/">Facebook&#39;s flux page</a></p>
+<p><a href="http://redux.js.org">Redux documentation</a></p>
+<p><a href="https://github.com/wbuchwalter/ng-redux">NgRedux</a></p>
+</section></div>
+    </div>
+
+    <script src="lib/js/head.min.js"></script>
+    <script src="js/reveal.js"></script>
+
+    <script>
+    // Full list of configuration options available at:
+    // https://github.com/hakimel/reveal.js#configuration
+    Reveal.initialize({
+      controls: true,
+      progress: true,
+      history: true,
+      center: true,
+
+      transition: Reveal.getQueryHash().transition || 'slide', // none/fade/slide/convex/concave/zoom
+
+      // Optional reveal.js plugins
+      dependencies: [
+        //{ src: 'plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+        //{ src: 'plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+        //{ src: 'plugin/highlight/highlight.js', async: true, condition: function() { return !!document.querySelector( 'pre code' ); }, callback: function() { hljs.initHighlightingOnLoad(); } },
+        { src: 'plugin/zoom-js/zoom.js', async: true },
+        { src: 'plugin/notes/notes.js', async: true }
+      ]
+    });
+    </script>
+
+    <script src="js/dynamic-theme.js"></script><script src="js/custom.js"></script>
+
+  </body>
+</html>
